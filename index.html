@@ -13,22 +13,51 @@
     .container {
       max-width: 600px;
     }
-    .row .input-field {
-      margin-bottom: 0;
-    }
     .result {
       padding: 20px;
       margin-top: 20px;
+    }
+    table.striped td {
+      text-align: center;
+      cursor: pointer;
+    }
+    .set-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .set-label {
+      margin-right: 12px;
+      width: 28px;
+    }
+    .rep-count {
+      width: 24px;
+      display: inline-block;
+      margin-left: 8px;
+      font-weight: bold;
+    }
+    #setsSection {
+      display: none;
+      margin-top: 30px;
+    }
+    .exercise-divider {
+      font-weight: bold;
+      margin-top: 20px;
+      margin-bottom: 10px;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 5px;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h4 class="center-align">Калькулятор тренировки</h4>
+    <h5 id="workoutTitle" class="center-align"></h5>
+
+    <!-- Ввод данных -->
     <div class="row">
       <div class="input-field col s6">
         <input id="weight" type="number" min="1">
-        <label for="weight">Тестовый вес (кг)</label>
+        <label for="weight">Рабочий вес (кг)</label>
       </div>
       <div class="input-field col s6">
         <input id="reps" type="number" min="1">
@@ -48,79 +77,71 @@
     <div class="row">
       <div class="input-field col s12">
         <select id="bodytype">
-          <option value="lean">🧍 Худощавый (низкий процент жира и мышц)</option>
-          <option value="average" selected>⚖️ Средний (нормальный баланс)</option>
+          <option value="lean">🧟 Худощавый</option>
+          <option value="average" selected>⚖️ Средний</option>
           <option value="fat">🍩 Лишний жир</option>
           <option value="muscular">💪 Мускулистый</option>
         </select>
         <label>Тип телосложения</label>
       </div>
-    </div>
-    <div class="row">
       <div class="input-field col s12">
         <select id="goal">
           <option value="power">💥 Взрывная сила</option>
           <option value="cut">🔥 Сушка / рельеф</option>
           <option value="hypertrophy">💪 Мышечный рост</option>
+          <option value="recovery">♻️ Восстановление / реабилитация</option>
         </select>
         <label>Цель тренировки</label>
       </div>
     </div>
+
     <div class="center-align">
       <button class="btn waves-effect waves-light" onclick="calculatePlan()">Рассчитать
         <i class="material-icons right">calculate</i>
       </button>
+      <button class="btn blue lighten-2" onclick="addExercise()" style="margin-left: 10px;">Новое упражнение</button>
     </div>
+
     <div class="card blue-grey lighten-5 result" id="result" style="display:none;"></div>
+
+    <div id="setsSection">
+      <h6>Журнал подходов</h6>
+      <div id="setsContainer"></div>
+    </div>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      var elems = document.querySelectorAll('select');
-      M.FormSelect.init(elems);
+    document.addEventListener('DOMContentLoaded', function () {
+      M.FormSelect.init(document.querySelectorAll('select'));
+      const title = localStorage.getItem('currentWorkout') || 'Без названия';
+      document.getElementById('workoutTitle').textContent = 'Тренировка: ' + title;
+      if (localStorage.getItem('savedResult')) document.getElementById('result').innerHTML = localStorage.getItem('savedResult');
+      if (localStorage.getItem('savedSets')) {
+        document.getElementById('setsContainer').innerHTML = localStorage.getItem('savedSets');
+        document.getElementById('setsSection').style.display = 'block';
+      }
     });
 
     function calculateOneRepMax(weight, reps) {
       return weight * (1 + 0.0333 * reps);
     }
 
-    function getIMT(bodyweight, height) {
-      const h = height / 100;
-      return bodyweight / (h * h);
-    }
-
     function getRestAdjustment(bodytype) {
-      switch (bodytype) {
-        case 'lean': return 1.2;
-        case 'average': return 1.0;
-        case 'fat': return 1.4;
-        case 'muscular': return 0.85;
-      }
+      return { lean: 1.2, average: 1.0, fat: 1.4, muscular: 0.85 }[bodytype];
     }
 
     function getWeightMultiplier(bodytype) {
-      switch (bodytype) {
-        case 'lean': return 0.95;
-        case 'average': return 1.0;
-        case 'fat': return 0.9;
-        case 'muscular': return 1.05;
-      }
+      return { lean: 0.95, average: 1.0, fat: 0.9, muscular: 1.05 }[bodytype];
     }
 
-    function estimateOptimalRest(goal, sets, restFactor) {
+    function estimateOptimalRest(goal, sets, factor) {
       let baseMin, baseMax;
-      if (goal === 'power') {
-        baseMin = Math.max(2, sets * 0.8);
-        baseMax = Math.min(5, sets * 1.2);
-      } else if (goal === 'cut') {
-        baseMin = Math.max(0.3, sets * 0.4);
-        baseMax = Math.min(1.0, sets * 0.6);
-      } else if (goal === 'hypertrophy') {
-        baseMin = Math.max(0.6, sets * 0.7);
-        baseMax = Math.min(1.5, sets * 0.9);
-      }
-      return `${(baseMin * restFactor).toFixed(1)}–${(baseMax * restFactor).toFixed(1)} минут`;
+      if (goal === 'power') { baseMin = sets * 0.8; baseMax = sets * 1.2; }
+      else if (goal === 'cut') { baseMin = sets * 0.4; baseMax = sets * 0.6; }
+      else if (goal === 'hypertrophy') { baseMin = sets * 0.7; baseMax = sets * 0.9; }
+      else { baseMin = 0.5; baseMax = 1.0; }
+      return `${(baseMin * factor).toFixed(1)}–${(baseMax * factor).toFixed(1)} мин`;
     }
 
     function calculatePlan() {
@@ -131,50 +152,120 @@
       const goal = document.getElementById('goal').value;
       const bodytype = document.getElementById('bodytype').value;
 
-      if (
-        isNaN(weight) || isNaN(reps) || isNaN(bodyweight) || isNaN(height) ||
-        weight < 1 || reps < 1 || bodyweight < 30 || height < 100
-      ) {
-        M.toast({ html: 'Пожалуйста, заполните все поля корректно' });
+      if ([weight, reps, bodyweight, height].some(v => isNaN(v) || v < 1)) {
+        M.toast({ html: 'Заполните все поля корректно' });
         return;
       }
 
       const oneRepMax = calculateOneRepMax(weight, reps);
-      const weightMultiplier = getWeightMultiplier(bodytype);
       const restFactor = getRestAdjustment(bodytype);
+      const weightFactor = getWeightMultiplier(bodytype);
 
-      let workingRange, repRange, sets;
+      let workingRange, sets;
+      if (goal === 'power') { workingRange = [0.85, 0.95]; sets = 5; }
+      else if (goal === 'cut') { workingRange = [0.5, 0.7]; sets = 3; }
+      else if (goal === 'hypertrophy') { workingRange = [0.65, 0.8]; sets = 4; }
+      else { workingRange = [0.3, 0.5]; sets = 2; }
 
-      if (goal === 'power') {
-        workingRange = [0.85, 0.95];
-        repRange = [1, 5];
-        sets = 5;
-      } else if (goal === 'cut') {
-        workingRange = [0.5, 0.7];
-        repRange = [12, 20];
-        sets = 3;
-      } else if (goal === 'hypertrophy') {
-        workingRange = [0.65, 0.8];
-        repRange = [6, 12];
-        sets = 4;
-      }
-
-      const minWork = Math.round(oneRepMax * workingRange[0] * weightMultiplier);
-      const maxWork = Math.round(oneRepMax * workingRange[1] * weightMultiplier);
+      const minWork = Math.round(oneRepMax * workingRange[0] * weightFactor);
+      const maxWork = Math.round(oneRepMax * workingRange[1] * weightFactor);
       const rest = estimateOptimalRest(goal, sets, restFactor);
 
-      const resultHTML = `
-        <h5>Результаты</h5>
-        <p><strong>Теоретический максимум (1ПМ):</strong> ${oneRepMax.toFixed(1)} кг</p>
-        <p><strong>Рабочий вес (с учётом телосложения):</strong> ${minWork}–${maxWork} кг</p>
-        <p><strong>Повторения:</strong> ${repRange[0]}–${repRange[1]}</p>
-        <p><strong>Подходы:</strong> ${sets}</p>
-        <p><strong>Отдых между подходами:</strong> ${rest}</p>
-      `;
+      let tableHTML = `<h5>Результаты</h5>
+        <p><strong>1ПМ:</strong> ${oneRepMax.toFixed(1)} кг</p>
+        <p><strong>Отдых:</strong> ${rest}</p>
+        <div class="card white">
+          <div class="card-content">
+            <span class="card-title">Соответствие веса и повторений</span>
+            <table class="striped centered highlight responsive-table">
+              <thead>
+                <tr><th>кг</th>`;
+      for (let kg = minWork; kg <= maxWork; kg++) {
+        tableHTML += `<th class="selectable-weight" data-weight="${kg}">${kg}</th>`;
+      }
+      tableHTML += `</tr></thead><tbody><tr><td>раз</td>`;
+      for (let kg = minWork; kg <= maxWork; kg++) {
+        const percent = kg / oneRepMax;
+        const estReps = Math.max(1, Math.round((1 - percent) / 0.0333));
+        tableHTML += `<td>${estReps}</td>`;
+      }
+      tableHTML += `</tr></tbody></table>`;
 
-      const resultBlock = document.getElementById('result');
-      resultBlock.innerHTML = resultHTML;
-      resultBlock.style.display = 'block';
+      document.getElementById('result').innerHTML = tableHTML;
+      document.getElementById('result').style.display = 'block';
+      localStorage.setItem('savedResult', tableHTML);
+
+      document.querySelectorAll('.selectable-weight').forEach(cell => {
+        cell.addEventListener('click', () => {
+          const selectedWeight = parseInt(cell.dataset.weight);
+          addSet(selectedWeight);
+        });
+      });
+    }
+
+    function addSet(weight) {
+      document.getElementById('setsSection').style.display = 'block';
+      const container = document.getElementById('setsContainer');
+
+      const row = document.createElement('div');
+      row.className = 'set-row';
+
+      const checkbox = document.createElement('label');
+      checkbox.className = 'set-label';
+      checkbox.innerHTML = `<input type="checkbox"><span></span>`;
+      row.appendChild(checkbox);
+
+      const label = document.createElement('span');
+      label.textContent = `Вес: ${weight} кг`;
+      label.style.marginLeft = '10px';
+      label.style.marginRight = '20px';
+      row.appendChild(label);
+
+      const slider = document.createElement('input');
+      slider.type = 'range';
+      slider.min = 1;
+      slider.max = 25;
+      slider.value = 10;
+      slider.className = 'browser-default';
+      slider.style.flex = '1';
+
+      const repDisplay = document.createElement('span');
+      repDisplay.className = 'rep-count';
+      repDisplay.textContent = slider.value;
+
+      slider.addEventListener('input', () => {
+        repDisplay.textContent = slider.value;
+        saveSets();
+      });
+
+      const deleteBtn = document.createElement('button');
+      deleteBtn.className = 'btn red btn-small';
+      deleteBtn.textContent = '✕';
+      deleteBtn.style.marginLeft = '10px';
+      deleteBtn.type = 'button';
+      deleteBtn.onclick = function() {
+        row.remove();
+        saveSets();
+      };
+      row.appendChild(deleteBtn);
+      container.appendChild(row);
+      saveSets();
+    }
+
+    function addExercise() {
+      const name = prompt('Введите название упражнения:');
+      if (!name) return;
+      document.getElementById('setsSection').style.display = 'block';
+      const div = document.createElement('div');
+      div.className = 'exercise-divider';
+      div.textContent = name;
+      document.getElementById('setsContainer').appendChild(div);
+      saveSets();
+    }
+
+    function saveSets() {
+      const html = document.getElementById('setsContainer').innerHTML;
+      localStorage.setItem('savedSets', html);
     }
   </script>
 </body>
