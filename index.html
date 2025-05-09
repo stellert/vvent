@@ -118,8 +118,27 @@
       document.getElementById('workoutTitle').textContent = 'Тренировка: ' + title;
       if (localStorage.getItem('savedResult')) document.getElementById('result').innerHTML = localStorage.getItem('savedResult');
       if (localStorage.getItem('savedSets')) {
-        document.getElementById('setsContainer').innerHTML = localStorage.getItem('savedSets');
+        const setsContainer = document.getElementById('setsContainer');
+        setsContainer.innerHTML = localStorage.getItem('savedSets');
         document.getElementById('setsSection').style.display = 'block';
+        setsContainer.querySelectorAll('.set-row').forEach(row => {
+          const slider = row.querySelector('input[type="range"]');
+          const repDisplay = row.querySelector('.rep-count');
+          if (slider && repDisplay) {
+            repDisplay.textContent = slider.value;
+            slider.addEventListener('input', () => {
+              repDisplay.textContent = slider.value;
+              saveSets();
+            });
+          }
+          const deleteBtn = row.querySelector('button');
+          if (deleteBtn) {
+            deleteBtn.addEventListener('click', () => {
+              row.remove();
+              saveSets();
+            });
+          }
+        });
       }
     });
 
@@ -185,9 +204,13 @@
       }
       tableHTML += `</tr></thead><tbody><tr><td>раз</td>`;
       for (let kg = minWork; kg <= maxWork; kg++) {
-        const percent = kg / oneRepMax;
-        const estReps = Math.max(1, Math.round((1 - percent) / 0.0333));
-        tableHTML += `<td>${estReps}</td>`;
+        const estReps = Math.max(1, Math.round((oneRepMax / kg - 1) / 0.0333));
+        let cellClass = '';
+        if (estReps <= 3) cellClass = 'red lighten-4';
+        else if (estReps <= 6) cellClass = 'orange lighten-4';
+        else if (estReps <= 10) cellClass = 'yellow lighten-4';
+        else cellClass = 'green lighten-4';
+        tableHTML += `<td class="${cellClass}">${estReps}</td>`;
       }
       tableHTML += `</tr></tbody></table>`;
 
@@ -242,11 +265,13 @@
       deleteBtn.className = 'btn red btn-small';
       deleteBtn.textContent = '✕';
       deleteBtn.style.marginLeft = '10px';
-      deleteBtn.type = 'button';
-      deleteBtn.onclick = function() {
+      deleteBtn.addEventListener('click', () => {
         row.remove();
         saveSets();
-      };
+      });
+
+      row.appendChild(slider);
+      row.appendChild(repDisplay);
       row.appendChild(deleteBtn);
       container.appendChild(row);
       saveSets();
