@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Калькулятор тренировки</title>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+  <style>
+    body {
+      padding: 30px;
+    }
+    .container {
+      max-width: 600px;
+    }
+    .result {
+      padding: 20px;
+      margin-top: 20px;
+    }
+    table.striped td,
+table.striped th {
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.3s, box-shadow 0.3s;
+  border-radius: 4px;
+  padding: 8px 12px;
+  user-select: none;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.3s, box-shadow 0.3s;
+  border-radius: 4px;
+}
+table.striped td:hover,
+table.striped th:hover {
+  background-color: #bbdefb;
+  box-shadow: inset 0 0 0 2px #42a5f5;
+  font-weight: bold;
+  background-color: #e3f2fd;
+  box-shadow: inset 0 0 0 1px #90caf9;
+}
+.red.lighten-4 {
+  background-color: #ffebee !important;
+}
+.orange.lighten-4 {
+  background-color: #fff3e0 !important;
+}
+.yellow.lighten-4 {
+  background-color: #fffde7 !important;
+}
+.green.lighten-4 {
+  background-color: #e8f5e9 !important;
+}
+    table.striped td:hover {
+      background-color: #e3f2fd;
+      box-shadow: inset 0 0 0 1px #90caf9;
+    }
+    .green.lighten-4 {
+      background-color: #e8f5e9 !important;
+    }
+    .yellow.lighten-4 {
+      background-color: #fffde7 !important;
+    }
+    .orange.lighten-4 {
+      background-color: #fff3e0 !important;
+    }
+    .red.lighten-4 {
+      background-color: #ffebee !important;
+    }
+    .set-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+  padding: 10px;
+  background-color: #ffffff;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+    .set-label {
+      margin-right: 12px;
+      width: 28px;
+    }
+    .rep-count {
+      width: 24px;
+      display: inline-block;
+      margin-left: 8px;
+      font-weight: bold;
+    }
+    #setsSection {
+  display: none;
+  margin-top: 30px;
+  padding: 15px;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+    .exercise-divider {
+      font-weight: bold;
+      margin-top: 20px;
+      margin-bottom: 10px;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h5 id="workoutTitle" class="center-align"></h5>
+
+    <!-- Ввод данных -->
+    <div class="row">
+      <div class="input-field col s6">
+        <input id="weight" type="number" min="1">
+        <label for="weight">Рабочий вес (кг)</label>
+      </div>
+      <div class="input-field col s6">
+        <input id="reps" type="number" min="1">
+        <label for="reps">Макс. повторений</label>
+      </div>
+    </div>
+    <div class="row">
+      <div class="input-field col s6">
+        <input id="bodyweight" type="number" min="30">
+        <label for="bodyweight">Вес спортсмена (кг)</label>
+      </div>
+      <div class="input-field col s6">
+        <input id="height" type="number" min="100">
+        <label for="height">Рост (см)</label>
+      </div>
+    </div>
+    <div class="row">
+      <div class="input-field col s12">
+        <select id="bodytype">
+          <option value="lean">🧟 Худощавый</option>
+          <option value="average" selected>⚖️ Средний</option>
+          <option value="fat">🍩 Лишний жир</option>
+          <option value="muscular">💪 Мускулистый</option>
+        </select>
+        <label>Тип телосложения</label>
+      </div>
+      <div class="input-field col s12">
+        <select id="goal">
+          <option value="power">💥 Взрывная сила</option>
+          <option value="cut">🔥 Сушка / рельеф</option>
+          <option value="hypertrophy">💪 Мышечный рост</option>
+          <option value="recovery">♻️ Восстановление / реабилитация</option>
+        </select>
+        <label>Цель тренировки</label>
+      </div>
+    </div>
+
+    <div class="center-align">
+      <button class="btn waves-effect waves-light" onclick="calculatePlan()">Рассчитать
+        <i class="material-icons right">calculate</i>
+      </button>
+      <button class="btn blue lighten-2" onclick="addExercise()" style="margin-left: 10px;">Новое упражнение</button>
+    </div>
+
+    <div class="card blue-grey lighten-5 result" id="result" style="display:none;"></div>
+
+    <div id="setsSection">
+      <h6>Журнал подходов</h6>
+      <div id="setsContainer"></div>
+      <div class="center-align" style="margin-top: 20px;">
+        <button class="btn red" onclick="clearAllData()">Очистить всё</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+<script>
+  function clearAllData() {
+    if (confirm('Удалить все сохранённые данные?')) {
+      localStorage.removeItem('savedSets');
+      localStorage.removeItem('savedResult');
+      document.getElementById('setsContainer').innerHTML = '';
+      document.getElementById('result').innerHTML = '';
+      document.getElementById('setsSection').style.display = 'none';
+      document.getElementById('result').style.display = 'none';
+      M.toast({ html: 'Все данные удалены' });
+    }
+  }
+</script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const bodyweightInput = document.getElementById('bodyweight');
+      const heightInput = document.getElementById('height');
+      if (localStorage.getItem('savedBodyweight')) bodyweightInput.value = localStorage.getItem('savedBodyweight');
+      if (localStorage.getItem('savedHeight')) heightInput.value = localStorage.getItem('savedHeight');
+      M.FormSelect.init(document.querySelectorAll('select'));
+      setTimeout(() => M.updateTextFields(), 100);
+      M.FormSelect.init(document.querySelectorAll('select'));
+      const title = localStorage.getItem('currentWorkout') || 'Без названия';
+      document.getElementById('workoutTitle').textContent = 'Тренировка: ' + title;
+      if (localStorage.getItem('savedResult')) document.getElementById('result').innerHTML = localStorage.getItem('savedResult');
+      if (localStorage.getItem('savedSets')) {
+        const setsContainer = document.getElementById('setsContainer');
+        setsContainer.innerHTML = localStorage.getItem('savedSets');
+        document.getElementById('setsSection').style.display = 'block';
+        setsContainer.querySelectorAll('.set-row').forEach(row => {
+          const slider = row.querySelector('input[type="range"]');
+          const repDisplay = row.querySelector('.rep-count');
+          if (slider && repDisplay) {
+            repDisplay.textContent = slider.value;
+            slider.addEventListener('input', () => {
+              repDisplay.textContent = slider.value;
+              saveSets();
+            });
+          }
+          const deleteBtn = row.querySelector('button');
+          if (deleteBtn) {
+            deleteBtn.addEventListener('click', () => {
+        const prev = row.previousElementSibling;
+        row.remove();
+        if (prev && prev.classList.contains('exercise-divider')) {
+          const next = prev.nextElementSibling;
+          const isLastDivider = !next || next.classList.contains('exercise-divider');
+          if (isLastDivider) prev.remove();
+        }
+              saveSets();
+            });
+          }
+        });
+      }
+    });
+
+    function calculateOneRepMax(weight, reps) {
+      return weight * (1 + 0.0333 * reps);
+    }
+
+    function getRestAdjustment(bodytype) {
+      return { lean: 1.2, average: 1.0, fat: 1.4, muscular: 0.85 }[bodytype];
+    }
+
+    function getWeightMultiplier(bodytype) {
+      return { lean: 0.95, average: 1.0, fat: 0.9, muscular: 1.05 }[bodytype];
+    }
+
+    function estimateOptimalRest(goal, sets, factor) {
+      let baseMin, baseMax;
+      if (goal === 'power') { baseMin = sets * 0.8; baseMax = sets * 1.2; }
+      else if (goal === 'cut') { baseMin = sets * 0.4; baseMax = sets * 0.6; }
+      else if (goal === 'hypertrophy') { baseMin = sets * 0.7; baseMax = sets * 0.9; }
+      else { baseMin = 0.5; baseMax = 1.0; }
+      return `${(baseMin * factor).toFixed(1)}–${(baseMax * factor).toFixed(1)} мин`;
+    }
+
+    function calculatePlan() {
+      localStorage.setItem('savedBodyweight', document.getElementById('bodyweight').value);
+      localStorage.setItem('savedHeight', document.getElementById('height').value);
+      const weight = parseFloat(document.getElementById('weight').value);
+      const reps = parseInt(document.getElementById('reps').value);
+      const bodyweight = parseFloat(document.getElementById('bodyweight').value);
+      const height = parseInt(document.getElementById('height').value);
+      const goal = document.getElementById('goal').value;
+      const bodytype = document.getElementById('bodytype').value;
+
+      if ([weight, reps, bodyweight, height].some(v => isNaN(v) || v < 1)) {
+        M.toast({ html: 'Заполните все поля корректно' });
+        return;
+      }
+
+      const oneRepMax = calculateOneRepMax(weight, reps);
+      const restFactor = getRestAdjustment(bodytype);
+      const weightFactor = getWeightMultiplier(bodytype);
+
+      let workingRange, sets;
+      if (goal === 'power') { workingRange = [0.85, 0.95]; sets = 5; }
+      else if (goal === 'cut') { workingRange = [0.5, 0.7]; sets = 3; }
+      else if (goal === 'hypertrophy') { workingRange = [0.65, 0.8]; sets = 4; }
+      else { workingRange = [0.3, 0.5]; sets = 2; }
+
+      const minWork = Math.round(oneRepMax * workingRange[0] * weightFactor);
+      const maxWork = Math.round(oneRepMax * workingRange[1] * weightFactor);
+      const rest = estimateOptimalRest(goal, sets, restFactor);
+
+      let tableHTML = `<h5>Результаты</h5>
+        <p><strong>1ПМ:</strong> ${oneRepMax.toFixed(1)} кг</p>
+        <p><strong>Отдых:</strong> ${rest}</p>
+        <div class="card white">
+          <div class="card-content">
+            <span class="card-title">Соответствие веса и повторений</span>
+            <table class="striped centered highlight responsive-table">
+              <thead>
+                <tr><th>кг</th>`;
+      for (let kg = minWork; kg <= maxWork; kg++) {
+        tableHTML += `<th class="selectable-weight" data-weight="${kg}">${kg}</th>`;
+      }
+      tableHTML += `</tr></thead><tbody><tr><td>раз</td>`;
+      for (let kg = minWork; kg <= maxWork; kg++) {
+        const estReps = Math.max(1, Math.round((oneRepMax / kg - 1) / 0.0333));
+        let cellClass = '';
+        if (estReps <= 3) cellClass = 'red lighten-4';
+        else if (estReps <= 6) cellClass = 'orange lighten-4';
+        else if (estReps <= 10) cellClass = 'yellow lighten-4';
+        else cellClass = 'green lighten-4';
+        tableHTML += `<td class="${cellClass}">${estReps}</td>`;
+      }
+      tableHTML += `</tr></tbody></table>`;
+
+      document.getElementById('result').innerHTML = tableHTML;
+      document.getElementById('result').style.display = 'block';
+      localStorage.setItem('savedResult', tableHTML);
+
+      document.querySelectorAll('.selectable-weight').forEach(cell => {
+        cell.addEventListener('click', () => {
+          const selectedWeight = parseInt(cell.dataset.weight);
+          addSet(selectedWeight);
+        });
+      });
+    }
+
+    function addSet(weight) {
+      document.getElementById('setsSection').style.display = 'block';
+      const container = document.getElementById('setsContainer');
+
+      const row = document.createElement('div');
+      row.className = 'set-row';
+
+      const checkbox = document.createElement('label');
+      checkbox.className = 'set-label';
+      checkbox.innerHTML = `<input type="checkbox"><span></span>`;
+      row.appendChild(checkbox);
+
+      const label = document.createElement('span');
+      label.textContent = `Вес: ${weight} кг`;
+      label.style.marginLeft = '10px';
+      label.style.marginRight = '20px';
+      row.appendChild(label);
+
+      const slider = document.createElement('input');
+      slider.type = 'range';
+      slider.min = 1;
+      slider.max = 25;
+      slider.value = 10;
+      slider.className = 'browser-default';
+      slider.style.flex = '1';
+
+      const repDisplay = document.createElement('span');
+      repDisplay.className = 'rep-count';
+      repDisplay.textContent = slider.value;
+
+      slider.addEventListener('input', () => {
+        repDisplay.textContent = slider.value;
+        saveSets();
+      });
+
+      const deleteBtn = document.createElement('button');
+      deleteBtn.className = 'btn red btn-small';
+      deleteBtn.textContent = '✕';
+      deleteBtn.style.marginLeft = '10px';
+      deleteBtn.addEventListener('click', () => {
+        row.remove();
+        saveSets();
+      });
+
+      row.appendChild(slider);
+      row.appendChild(repDisplay);
+      row.appendChild(deleteBtn);
+      container.appendChild(row);
+      saveSets();
+    }
+
+    function addExercise() {
+      document.getElementById('setsSection').style.display = 'block';
+      const setsContainer = document.getElementById('setsContainer');
+
+      const inputWrapper = document.createElement('div');
+      inputWrapper.className = 'set-row';
+
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'browser-default';
+      input.placeholder = 'Название упражнения';
+      input.style.flex = '1';
+      input.style.padding = '6px 12px';
+      input.style.marginRight = '10px';
+      input.style.border = '1px solid #ccc';
+      input.style.borderRadius = '4px';
+      input.style.fontSize = '14px';
+      input.style.outline = 'none';
+      input.addEventListener('focus', () => {
+        input.style.borderColor = '#42a5f5';
+        input.style.boxShadow = '0 0 0 2px rgba(66,165,245,0.2)';
+      });
+      input.addEventListener('blur', () => {
+        input.style.borderColor = '#ccc';
+        input.style.boxShadow = 'none';
+      });
+      input.style.padding = '10px 14px';
+      input.style.border = '2px solid #bdbdbd';
+      input.style.borderRadius = '6px';
+      input.style.fontSize = '15px';
+      input.style.transition = 'border-color 0.3s, box-shadow 0.3s';
+      input.style.boxShadow = 'inset 0 1px 2px rgba(0,0,0,0.1)';
+
+      input.onfocus = function () {
+        input.style.borderColor = '#42a5f5';
+        input.style.boxShadow = '0 0 0 2px rgba(66,165,245,0.2)';
+      };
+      input.onblur = function () {
+        input.style.borderColor = '#bdbdbd';
+        input.style.boxShadow = 'inset 0 1px 2px rgba(0,0,0,0.1)';
+      };
+      input.style.padding = '8px';
+      input.style.border = '1px solid #ccc';
+      input.style.borderRadius = '6px';
+      input.style.fontSize = '14px';
+      input.style.boxShadow = 'inset 0 1px 3px rgba(0,0,0,0.1)';
+      input.style.flex = '1';
+
+      const okButton = document.createElement('button');
+      okButton.className = 'btn green btn-small';
+      okButton.textContent = 'OK';
+      okButton.style.marginLeft = '10px';
+
+      okButton.addEventListener('click', () => {
+        const name = input.value.trim();
+        if (!name) return;
+        const divider = document.createElement('div');
+        divider.className = 'exercise-divider';
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = name;
+        nameSpan.style.flex = '1';
+
+        const deleteExerciseBtn = document.createElement('button');
+        deleteExerciseBtn.textContent = '✕';
+        deleteExerciseBtn.className = 'btn red btn-small';
+        deleteExerciseBtn.style.marginLeft = '10px';
+        deleteExerciseBtn.onclick = function () {
+          const next = divider.nextElementSibling;
+          if (!next || next.classList.contains('exercise-divider')) {
+            divider.remove();
+          } else {
+            let el = next;
+            while (el && !el.classList.contains('exercise-divider')) {
+              const toRemove = el;
+              el = el.nextElementSibling;
+              toRemove.remove();
+            }
+            divider.remove();
+          }
+          saveSets();
+        };
+        divider.style.display = 'flex';
+        divider.style.alignItems = 'center';
+        divider.appendChild(nameSpan);
+        divider.appendChild(deleteExerciseBtn);
+        setsContainer.replaceChild(divider, inputWrapper);
+        saveSets();
+      });
+
+      inputWrapper.appendChild(input);
+      inputWrapper.appendChild(okButton);
+      setsContainer.appendChild(inputWrapper);
+    }
+
+    function saveSets() {
+      const html = document.getElementById('setsContainer').innerHTML;
+      localStorage.setItem('savedSets', html);
+    }
+  </script>
+</body>
+</html>
