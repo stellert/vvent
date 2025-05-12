@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Тренировочный калькулятор</title>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h5 id="workoutTitle" class="center-align teal-text text-darken-2"></h5>
+
+    <!-- Параметры тренировки -->
+    <div class="row">
+      <div class="input-field col s6">
+        <input id="weight" type="number" min="1">
+        <label for="weight">Рабочий вес (кг)</label>
+      </div>
+      <div class="input-field col s6">
+        <input id="reps" type="number" min="1">
+        <label for="reps">Макс. повторений</label>
+      </div>
+    </div>
+    <div class="row">
+      <div class="input-field col s6">
+        <input id="bodyweight" type="number" min="30">
+        <label for="bodyweight">Вес спортсмена (кг)</label>
+      </div>
+      <div class="input-field col s6">
+        <input id="height" type="number" min="100">
+        <label for="height">Рост (см)</label>
+      </div>
+    </div>
+    <div class="row">
+      <div class="input-field col s12">
+        <select id="bodytype">
+          <option value="" disabled selected>Тип телосложения</option>
+          <option value="lean">🧟 Худощавый</option>
+          <option value="average">⚖️ Средний</option>
+          <option value="fat">🍩 Лишний жир</option>
+          <option value="muscular">💪 Мускулистый</option>
+        </select>
+      </div>
+      <div class="input-field col s12">
+        <select id="goal">
+          <option value="" disabled selected>Цель тренировки</option>
+          <option value="power">💥 Взрывная сила</option>
+          <option value="cut">🔥 Сушка / рельеф</option>
+          <option value="hypertrophy">💪 Мышечный рост</option>
+          <option value="recovery">♻️ Восстановление</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Действия -->
+    <div class="center-align">
+      <button id="calcBtn" class="btn waves-effect waves-light teal">
+        Рассчитать <i class="material-icons right">calculate</i>
+      </button>
+      <button id="addExerciseBtn" class="btn blue lighten-2 btn-add-exercise">
+        Новое упражнение
+      </button>
+    </div>
+
+    <!-- Результаты -->
+    <div id="result" class="card lighten-5" style="display:none; margin-top:20px;">
+      <div class="card-content">
+        <span class="card-title">Результаты</span>
+        <div id="resultContent"></div>
+      </div>
+    </div>
+
+    <!-- Журнал подходов -->
+    <div id="setsSection" style="display:none; margin-top:20px;">
+      <h6>Журнал подходов</h6>
+      <div id="setsContainer"></div>
+      <div class="center-align" style="margin-top:20px;">
+        <button id="clearBtn" class="btn red">Очистить всё</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <script src="script.js" defer></script>
+</body>
+</html>
